@@ -19,3 +19,29 @@ class Admin(Base):
     last_login = Column(DateTime)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+class Category(Base):
+    __tablename__ = "categories"
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    name = Column(String(100), unique=True, nullable=False)
+    description = Column(Text)
+    slug = Column(String(150), unique=True, nullable=False)
+    image_url = Column(String(255))
+    sort_order = Column(Integer, default=0)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+class SystemLog(Base):
+    __tablename__ = "system_logs"
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    admin_id = Column(UUID(as_uuid=True), nullable=False)
+    action = Column(String(100), nullable=False)  # e.g., "CREATE_USER", "DELETE_PRODUCT"
+    entity_type = Column(String(50), nullable=False)  # e.g., "User", "Product"
+    details = Column(Text)  # JSON string with additional details
+    ip_address = Column(String(45))  # IPv4 or IPv6
+    user_agent = Column(String(500))
+    status = Column(String(20), default="SUCCESS")  # SUCCESS, FAILED, WARNING
+    created_at = Column(DateTime, default=datetime.utcnow)

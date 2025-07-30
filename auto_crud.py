@@ -105,13 +105,15 @@ class AutoCRUD:
                         hasattr(obj, '__tablename__') and 
                         isinstance(obj, DeclarativeMeta)):
                         
-                        model_key = file_path.stem.lower()  # Use filename as key
+                        # Use class name as key (not filename) to handle multiple models per file
+                        model_key = name.lower().replace('db', '').replace('model', '')
                         self.models[model_key] = {
                             'db_model': obj,
                             'table_name': obj.__tablename__,
-                            'class_name': name
+                            'class_name': name,
+                            'file_name': file_path.stem
                         }
-                        print(f"📋 Found model: {name} -> /{model_key}s")
+                        print(f"📋 Found model: {name} -> /{model_key}s (from {file_path.stem}.py)")
                         
             except Exception as e:
                 print(f"⚠️  Error importing {module_name}: {e}")
@@ -136,28 +138,42 @@ class AutoCRUD:
             try:
                 module = importlib.import_module(module_name)
                 
-                schema_key = file_path.stem.lower()
-                schemas = {}
+                # Find Pydantic models in the module - group by model name
+                model_schemas = {}
                 
-                # Find Pydantic models in the module
                 for name, obj in inspect.getmembers(module):
                     if (inspect.isclass(obj) and 
                         issubclass(obj, BaseModel) and 
                         obj != BaseModel):
                         
                         name_lower = name.lower()
+                        
+                        # Extract model name from schema class name
+                        model_name = None
                         if 'create' in name_lower:
-                            schemas['create'] = obj
+                            model_name = name_lower.replace('create', '')
+                            schema_type = 'create'
                         elif 'update' in name_lower:
-                            schemas['update'] = obj
+                            model_name = name_lower.replace('update', '')
+                            schema_type = 'update'
                         elif 'response' in name_lower:
-                            schemas['response'] = obj
+                            model_name = name_lower.replace('response', '')
+                            schema_type = 'response'
                         elif 'base' in name_lower:
-                            schemas['base'] = obj
+                            model_name = name_lower.replace('base', '')
+                            schema_type = 'base'
+                        else:
+                            continue
+                        
+                        if model_name:
+                            if model_name not in model_schemas:
+                                model_schemas[model_name] = {}
+                            model_schemas[model_name][schema_type] = obj
                 
-                if schemas:
-                    self.schemas[schema_key] = schemas
-                    print(f"📋 Found schemas for {schema_key}: {list(schemas.keys())}")
+                # Add schemas to self.schemas
+                for model_name, schemas in model_schemas.items():
+                    self.schemas[model_name] = schemas
+                    print(f"📋 Found schemas for {model_name}: {list(schemas.keys())}")
                     
             except Exception as e:
                 print(f"⚠️  Error importing {module_name}: {e}")

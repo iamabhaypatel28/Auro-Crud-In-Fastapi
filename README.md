@@ -241,9 +241,38 @@ class YourModel(Base):  # ✅ Inherit from Base
     name = Column(String(100), nullable=False)  # ✅ Other fields
     # ... more fields
 
+# ✅ MULTIPLE MODELS IN ONE FILE - Supported!
+class User(Base):
+    __tablename__ = "users"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    name = Column(String(100), nullable=False)
+
+class UserProfile(Base):
+    __tablename__ = "user_profiles"  # ✅ Different table name
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUID(as_uuid=True), nullable=False)
+
 # ❌ WRONG - Missing requirements
 class BadModel:  # ❌ No Base inheritance
     name = Column(String(100))  # ❌ No ID field, no __tablename__
+```
+
+### 🔥 **Multiple Models Per File:**
+```python
+# models/user.py - Multiple models in one file
+class User(Base):
+    __tablename__ = "users"
+    # ... fields
+
+class UserProfile(Base):
+    __tablename__ = "user_profiles"
+    # ... fields
+
+class UserSettings(Base):
+    __tablename__ = "user_settings"
+    # ... fields
+
+# Result: Creates /users/, /userprofiles/, /usersettings/ endpoints
 ```
 
 ## 📋 Schema Naming Convention
